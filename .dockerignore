@@ -1,0 +1,11 @@
+# Exclude all git directories.
+**/.git
+# Exclude downloaded node modules.
+node_modules
+# Exclude the private sub-repo...
+private
+# ...except for the config and sitemap directories.
+!private/config
+!private/sitemap
+# Exclude devtools config.
+devtools/config
