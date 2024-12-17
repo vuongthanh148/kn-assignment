@@ -2,14 +2,13 @@ package port
 
 import (
 	"context"
-
-	"github.com/centraldigital/cfw-sales-x-ordering-api/internal/core/domain"
+	"kn-assignment/internal/core/domain"
 )
 
-type Repository interface {
-	GetCustomersByStaffId(ctx context.Context, staffId string) ([]string, error)
-	GetSaleTemplatesByStaffId(ctx context.Context, staffId string) ([]domain.SaleTemplate, error)
-	GetStoresByStaffId(ctx context.Context, staffId string) ([]domain.Store, error)
-	PostSaleTemplatesByStaffId(ctx context.Context, data domain.SaleTemplate) error
-	PutSaleTemplatesByStaffId(ctx context.Context, data domain.SaleTemplate) error
+type TaskRepository interface {
+	CreateTask(ctx context.Context, task domain.Task) error
+	GetTasksByAssignee(ctx context.Context, assigneeID string) ([]domain.Task, error)
+	UpdateTaskStatus(ctx context.Context, taskID, status string) error
+	GetAllTasks(ctx context.Context, filter map[string]string, sort string) ([]domain.Task, error)
+	GetTaskSummary(ctx context.Context) ([]domain.TaskSummary, error)
 }

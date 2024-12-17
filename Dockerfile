@@ -1,12 +1,15 @@
-FROM alpine:3.15.0
-# RUN apk add --no-cache ca-certificate=20211220-r0
-RUN apk add --no-cache tzdata
+FROM golang:1.18-alpine
 
-ENV TZ=Asia/Bangkok
-ENV HOST=0.0.0.0
+WORKDIR /app
 
-# Copy binary to image
-COPY /server /server
+COPY go.mod ./
+COPY go.sum ./
+RUN go mod download
 
-CMD ["/server"]
+COPY . ./
 
+RUN go build -o /task-api
+
+EXPOSE 8080
+
+CMD ["/task-api"]
