@@ -3,25 +3,38 @@ package main
 import (
 	"context"
 	"kn-assignment/infrastructure"
+	authsvc "kn-assignment/internal/core/service/auth-svc"
 	tasksvc "kn-assignment/internal/core/service/task-svc"
+	authhdl "kn-assignment/internal/handler/auth-hdl"
 	taskhdl "kn-assignment/internal/handler/task-hdl"
+	"kn-assignment/internal/log"
+	authrepo "kn-assignment/internal/repository/postgres/auth-repo"
 	taskrepo "kn-assignment/internal/repository/postgres/task-repo"
+	userrepo "kn-assignment/internal/repository/postgres/user-repo"
 	"kn-assignment/internal/router"
 	"kn-assignment/middleware"
 	"kn-assignment/property"
 	"kn-assignment/server"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
 
+// @securityDefinitions.apiKey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\""
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	property.Init(ctx)
+
+	// Run database migrations
+	postgres := property.Get().Postgres
+	databaseUrl := "postgres://" + postgres.User + ":" + postgres.Password + "@" + postgres.Host + ":" + postgres.Port + "/" + postgres.Database + "?sslmode=disable"
+	server.RunMigrations(ctx, databaseUrl)
 
 	// init infrastructure
 	pgx, scanapi := infrastructure.NewPostgres(ctx)
@@ -29,12 +42,16 @@ func main() {
 
 	// init repository
 	taskRepository := taskrepo.New(pgx, scanapi, flavor)
+	authRepository := authrepo.New(pgx, scanapi, flavor)
+	userRepository := userrepo.New(pgx, scanapi, flavor)
 
 	// init service
-	taskService := tasksvc.New(taskRepository)
+	taskService := tasksvc.New(taskRepository, userRepository)
+	authService := authsvc.New(authRepository)
 
 	// init handler
 	taskHandler := taskhdl.New(taskService)
+	authHandler := authhdl.New(authService)
 
 	// init server
 	engine := server.InitServer()
@@ -45,6 +62,7 @@ func main() {
 	// init router
 	route := router.HandlerList{
 		TaskHandler: taskHandler,
+		AuthHandler: authHandler,
 	}
 
 	router.InitRouter(engine, route)
@@ -59,9 +77,9 @@ func main() {
 
 	// Wait for a termination signal
 	sig := <-gracefulStop
-	log.Printf("Received signal: %v", sig)
+	log.Infof(ctx, "Received signal: %v", sig)
 
 	// Give some time for the cron job to stop
 	time.Sleep(2 * time.Second)
-	log.Print("Application shutdown completed")
+	log.Info(ctx, "Application shutdown completed")
 }

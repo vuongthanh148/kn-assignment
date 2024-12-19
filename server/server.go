@@ -3,8 +3,8 @@ package server
 import (
 	"context"
 	"fmt"
+	"kn-assignment/internal/log"
 	"kn-assignment/property"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -13,6 +13,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
 func InitServer() *gin.Engine {
@@ -33,9 +36,9 @@ func StartServerWithCtx(ctx context.Context, h http.Handler, host string, port s
 	}
 
 	go func() {
-		log.Printf("server running at: %s:%s", host, port)
+		log.Infof(ctx, "server running at: %s:%s", host, port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("error servier listen and serve: %v\n", err)
+			log.Errorf(ctx, "error server listen and serve: %v\n", err)
 		}
 	}()
 
@@ -43,18 +46,37 @@ func StartServerWithCtx(ctx context.Context, h http.Handler, host string, port s
 	signal.Notify(gracefulStop, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-gracefulStop
 
-	log.Print("Shutdown Server ...")
+	log.Info(ctx, "Shutdown Server ...")
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {
-		log.Fatalf("Shut down server error: %v\n", err)
+		log.Errorf(ctx, "Shut down server error: %v\n", err)
 	}
 	select {
 	case <-ctx.Done():
-		log.Print("timeout of 10 seconds.\n")
+		log.Info(ctx, "timeout of 10 seconds.\n")
 	default:
 	}
-	log.Print("Server exiting")
+	log.Info(ctx, "Server exiting")
+}
+
+func RunMigrations(ctx context.Context, databaseUrl string) {
+	migrationsPath := "file://migrations"
+	if _, err := os.Stat("migrations"); os.IsNotExist(err) {
+		log.Fatalf(ctx, "Migrations folder not found: %v", err)
+	}
+	m, err := migrate.New(
+		migrationsPath,
+		databaseUrl)
+	if err != nil {
+		log.Fatalf(ctx, "Failed to create migrate instance: %v", err)
+	}
+
+	log.Info(ctx, "Running migrations...")
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf(ctx, "Failed to run migrations: %v", err)
+	}
+	log.Info(ctx, "Migrations applied successfully")
 }

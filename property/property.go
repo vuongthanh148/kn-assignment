@@ -3,7 +3,7 @@ package property
 import (
 	"context"
 	"fmt"
-	"log"
+	"kn-assignment/internal/log"
 	"time"
 
 	"cloud.google.com/go/profiler"
@@ -12,12 +12,13 @@ import (
 
 func Init(ctx context.Context) {
 	if err := envconfig.Process("", &cfg); err != nil {
-		log.Fatalf("read env error : %s", err.Error())
+		log.Fatalf(ctx, "read env error : %s", err.Error())
 	}
 	setPostgresConnString()
 }
 
 func setPostgresConnString() {
+	cfg.Postgres.Password = cfg.Secret.PostgresPasswordSecret
 	cfg.PostgresConfig.ConnString = fmt.Sprintf(cfg.PostgresConfig.ConnUri, cfg.Secret.PostgresPasswordSecret)
 }
 
@@ -61,11 +62,11 @@ type profilerConfig struct {
 }
 
 type postgres struct {
-	User     string `envconfig:"POSTGRES_USER" default:"postgres"`
+	User     string `envconfig:"POSTGRES_USER" default:"user"`
 	Host     string `envconfig:"POSTGRES_HOST" default:"localhost"`
 	Port     string `envconfig:"POSTGRES_PORT" default:"5432"`
-	Password string `envconfig:"POSTGRES_PASSWORD" default:"secret"`
-	Database string `envconfig:"POSTGRES_DATABASE" default:"postgres"`
+	Password string `envconfig:"POSTGRES_PASSWORD" default:"password"`
+	Database string `envconfig:"POSTGRES_DATABASE" default:"taskdb"`
 }
 
 type secretConfig struct {
@@ -114,5 +115,6 @@ type ServerProperties struct {
 	GinMode              string `envconfig:"GIN_MODE" long:"gin-mode" description:"Gin mode" env:"GIN_MODE"`
 	ClientLogMasking     bool   `envconfig:"CLIENT_LOG_MASKING" long:"client-log-masking" description:"Client log masking" env:"CLIENT_LOG_MASKING"`
 
-	WAppJwtExpiry time.Duration `envconfig:"W_APP_JWT_EXPIRY" long:"w-app-jwt-expiry" description:"W app jwt expiry" env:"W_APP_JWT_EXPIRY" default:"15m"`
+	AccessTokenExpiry  time.Duration `envconfig:"ACCESS_TOKEN_TIME" long:"access-token-time" description:"Access token expiry time" env:"ACCESS_TOKEN_TIME" default:"15m"`
+	RefreshTokenExpiry time.Duration `envconfig:"REFRESH_TOKEN_TIME" long:"refresh-token-time" description:"Refresh token expiry time" env:"REFRESH_TOKEN_TIME" default:"168h"`
 }

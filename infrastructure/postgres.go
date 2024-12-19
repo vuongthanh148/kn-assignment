@@ -3,8 +3,8 @@ package infrastructure
 import (
 	"context"
 	"fmt"
+	"kn-assignment/internal/log"
 	"kn-assignment/property"
-	"log"
 	"time"
 
 	"github.com/exaring/otelpgx"
@@ -26,7 +26,7 @@ func NewPostgres(ctx context.Context) (*pgxpool.Pool, *pgxscan.API) {
 func NewPostgresWithScanApi(ctx context.Context, pgCfg property.PostgresConfig) (*pgxpool.Pool, *pgxscan.API, error) {
 	cfg, err := pgxpool.ParseConfig(pgCfg.ConnString)
 	if err != nil {
-		log.Fatalf("unable to parse postgres connection uri: %v", err)
+		log.Fatalf(ctx, "unable to parse postgres connection uri: %v", err)
 	}
 
 	cfg.ConnConfig.Tracer = otelpgx.NewTracer()
@@ -60,19 +60,19 @@ func NewPostgresWithScanApi(ctx context.Context, pgCfg property.PostgresConfig) 
 		return nil, nil, fmt.Errorf("unable to ping db: %v", err)
 	}
 
-	scanApi := NewScanApi()
+	scanApi := NewScanApi(ctx)
 	return pool, scanApi, nil
 }
 
-func NewScanApi() *pgxscan.API {
+func NewScanApi(ctx context.Context) *pgxscan.API {
 	scanApi, err := pgxscan.NewDBScanAPI(dbscan.WithAllowUnknownColumns(true))
 	if err != nil {
-		log.Fatalf("error create dbscanapi: %v", err)
+		log.Fatalf(ctx, "error create dbscanapi: %v", err)
 	}
 
 	api, err := pgxscan.NewAPI(scanApi)
 	if err != nil {
-		log.Fatalf("error create sqlscanner api: %v", err)
+		log.Fatalf(ctx, "error create sqlscanner api: %v", err)
 	}
 	return api
 }

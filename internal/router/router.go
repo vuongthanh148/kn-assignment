@@ -2,7 +2,10 @@ package router
 
 import (
 	"kn-assignment/docs"
+	"kn-assignment/internal/core/domain"
+	authhdl "kn-assignment/internal/handler/auth-hdl"
 	taskhdl "kn-assignment/internal/handler/task-hdl"
+	"kn-assignment/middleware"
 	"kn-assignment/property"
 	"net/http"
 
@@ -14,6 +17,7 @@ import (
 
 type HandlerList struct {
 	TaskHandler taskhdl.Handler
+	AuthHandler authhdl.Handler
 }
 
 const serviceBaseURL = "/api/v1"
@@ -26,24 +30,35 @@ func InitRouter(app *gin.Engine, h HandlerList) {
 	docs.SwaggerInfo.Schemes = []string{property.Get().Server.ApiDocsSchema}
 	docs.SwaggerInfo.BasePath = serviceBaseURL
 
-	v1 := app.Group("/api/v1")
-	registerBasePath(v1, h)
-
-	swaggerV1 := app.Group(serviceBaseURL + "/v1")
-	registerBasePath(swaggerV1, h)
-
 	// Add API doc endpoint to router
 	if property.Get().Server.ApiDocs {
 		docPath := "/docs"
 		app.GET(docPath, func(ctx *gin.Context) { ctx.Redirect(http.StatusTemporaryRedirect, docPath+"/swagger/index.html") })
 		app.GET(docPath+"/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	}
-}
 
-func registerBasePath(v1 *gin.RouterGroup, h HandlerList) {
-	v1.POST("/tasks", h.TaskHandler.CreateTask)
-	v1.GET("/tasks/assignee/:assigneeID", h.TaskHandler.GetTasksByAssignee)
-	v1.PATCH("/tasks/:taskID/status", h.TaskHandler.UpdateTaskStatus)
-	v1.GET("/tasks", h.TaskHandler.GetAllTasks)
-	v1.GET("/tasks/summary", h.TaskHandler.GetTaskSummary)
+	v1 := app.Group("/api/v1")
+
+	// common routes
+	v1.GET("/tasks", middleware.AuthMiddleware(), h.TaskHandler.GetAllTasks)
+
+	// auth routes
+	auth := v1.Group("/auth")
+	auth.POST("/register", h.AuthHandler.Register)
+	auth.POST("/login", h.AuthHandler.Login)
+	auth.POST("/refresh-token", h.AuthHandler.RefreshToken)
+
+	// employee routes
+	employee := v1.Group("/")
+	employee.Use(middleware.AuthMiddleware())
+	employee.GET("/tasks/assignee/:assigneeID", h.TaskHandler.GetTasksByAssignee)
+	employee.PATCH("/tasks/:taskID/status", h.TaskHandler.UpdateTaskStatus)
+
+	// employer routes
+	employer := v1.Group("/")
+	employer.Use(middleware.AuthMiddleware())
+	employer.Use(middleware.RoleMiddleware(domain.RoleEmployer))
+	employer.POST("/tasks", h.TaskHandler.CreateTask)
+	employer.PATCH("/tasks/:taskID/assign", h.TaskHandler.AssignTask)
+	employer.GET("/tasks/summary", h.TaskHandler.GetTaskSummary)
 }

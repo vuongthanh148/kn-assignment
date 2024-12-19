@@ -43,20 +43,23 @@ go.work
 go.work.sum
 
 # Generated documentation
-docs/
+# docs/
 
 # Database migrations
-migrations/
+# migrations/
 
 # Swagger generated files
-swagger.yaml
-swagger.json
+# swagger.yaml
+# swagger.json
 
 # Logs
 *.log
 
 # Environment variables
-.env
+# .env
 
 # Docker
-docker-compose.override.yml
+# docker-compose.override.yml
+
+# Debug
+cmd/server/__debug*

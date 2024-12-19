@@ -3,9 +3,10 @@ package tasksvc
 import "kn-assignment/internal/core/port"
 
 type service struct {
-	repo port.TaskRepository
+	taskRepo port.TaskRepository
+	userRepo port.UserRepository
 }
 
-func New(taskRepository port.TaskRepository) port.TaskService {
-	return &service{repo: taskRepository}
+func New(taskRepository port.TaskRepository, userRepo port.UserRepository) port.TaskService {
+	return &service{taskRepo: taskRepository, userRepo: userRepo}
 }

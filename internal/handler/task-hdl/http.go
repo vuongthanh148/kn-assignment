@@ -12,6 +12,7 @@ type Handler interface {
 	UpdateTaskStatus(c *gin.Context)
 	GetAllTasks(c *gin.Context)
 	GetTaskSummary(c *gin.Context)
+	AssignTask(c *gin.Context)
 }
 
 type handler struct {

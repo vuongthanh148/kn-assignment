@@ -2,14 +2,14 @@ package property
 
 import (
 	"context"
-	"log"
+	"kn-assignment/internal/log"
 
 	"github.com/kelseyhightower/envconfig"
 )
 
 func InitProperty(ctx context.Context) {
 	if err := envconfig.Process("", &cfg); err != nil {
-		log.Fatalf("read env error : %s", err.Error())
+		log.Fatalf(ctx, "read env error : %s", err.Error())
 	}
 
 }
