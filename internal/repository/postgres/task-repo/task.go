@@ -47,7 +47,7 @@ func (r *repository) UpdateTaskStatus(ctx context.Context, taskID string, status
 	return nil
 }
 
-func (r *repository) GetAllTasks(ctx context.Context, filter map[string]string, sort string) ([]domain.Task, error) {
+func (r *repository) GetAllTasks(ctx context.Context, filter map[string]string, sort, order string) ([]domain.Task, error) {
 	query := `SELECT * FROM tasks WHERE 1=1`
 	args := []interface{}{}
 	i := 1
@@ -57,7 +57,9 @@ func (r *repository) GetAllTasks(ctx context.Context, filter map[string]string, 
 		i++
 	}
 	if sort != "" {
-		query += fmt.Sprintf(" ORDER BY %s", sort)
+		query += fmt.Sprintf(" ORDER BY %s %s", sort, order)
+	} else {
+		query += " ORDER BY created_at DESC, status ASC"
 	}
 	var tasks []domain.Task
 	err := pgxscan.Select(ctx, r.dbPool, &tasks, query, args...)
@@ -68,7 +70,7 @@ func (r *repository) GetAllTasks(ctx context.Context, filter map[string]string, 
 }
 
 func (r *repository) GetTaskSummary(ctx context.Context) ([]domain.TaskSummary, error) {
-	query := `SELECT assignee_id, COUNT(*) as total_tasks, SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_tasks FROM tasks GROUP BY assignee_id`
+	query := `SELECT assignee_id as employee_id, COUNT(*) as total_tasks, SUM(CASE WHEN status = 'Completed' THEN 1 ELSE 0 END) as completed_tasks FROM tasks WHERE assignee_id IS NOT NULL GROUP BY assignee_id`
 	var summaries []domain.TaskSummary
 	err := pgxscan.Select(ctx, r.dbPool, &summaries, query)
 	if err != nil {
@@ -85,4 +87,42 @@ func (r *repository) GetTaskByID(ctx context.Context, taskID string) (domain.Tas
 		return domain.Task{}, errors.NewCustomError(constant.ErrCodeInternalServer)
 	}
 	return task, nil
+}
+
+func (r *repository) UpdateTask(ctx context.Context, taskID string, name, description *string) error {
+	query := `UPDATE tasks SET`
+	args := []interface{}{}
+	i := 1
+
+	if name != nil {
+		query += fmt.Sprintf(" name = $%d,", i)
+		args = append(args, *name)
+		i++
+	}
+
+	if description != nil {
+		query += fmt.Sprintf(" description = $%d,", i)
+		args = append(args, *description)
+		i++
+	}
+
+	query = query[:len(query)-1] // Remove the trailing comma
+	query += fmt.Sprintf(" WHERE id = $%d", i)
+	args = append(args, taskID)
+
+	_, err := r.dbPool.Exec(ctx, query, args...)
+	if err != nil {
+		return errors.NewCustomError(constant.ErrCodeInternalServer)
+	}
+
+	return nil
+}
+
+func (r *repository) DeleteTask(ctx context.Context, taskID string) error {
+	query := `DELETE FROM tasks WHERE id = $1`
+	_, err := r.dbPool.Exec(ctx, query, taskID)
+	if err != nil {
+		return errors.NewCustomError(constant.ErrCodeInternalServer)
+	}
+	return nil
 }

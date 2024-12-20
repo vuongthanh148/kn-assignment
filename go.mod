@@ -7,6 +7,7 @@ require (
 	github.com/exaring/otelpgx v0.7.0
 	github.com/georgysavva/scany v1.2.2
 	github.com/georgysavva/scany/v2 v2.1.3
+	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
 	github.com/huandu/go-sqlbuilder v1.33.1
 	github.com/jackc/pgx/v5 v5.7.1

@@ -25,3 +25,8 @@ func (s *CreateTaskRequest) ToDomain() domain.CreateTaskRequest {
 		DueDate:     s.DueDate,
 	}
 }
+
+type UpdateTaskRequest struct {
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}

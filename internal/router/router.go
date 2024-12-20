@@ -5,7 +5,8 @@ import (
 	"kn-assignment/internal/core/domain"
 	authhdl "kn-assignment/internal/handler/auth-hdl"
 	taskhdl "kn-assignment/internal/handler/task-hdl"
-	"kn-assignment/middleware"
+	"kn-assignment/internal/middleware"
+
 	"kn-assignment/property"
 	"net/http"
 
@@ -26,7 +27,7 @@ func InitRouter(app *gin.Engine, h HandlerList) {
 	docs.SwaggerInfo.Title = property.Get().Server.ServiceName
 	docs.SwaggerInfo.Description = property.Get().Server.ServiceDescription
 	docs.SwaggerInfo.Version = property.Get().Server.ApiDocsVersion
-	docs.SwaggerInfo.Host = property.Get().Server.ApiDocsHost
+	docs.SwaggerInfo.Host = property.Get().Server.Host + ":" + property.Get().Server.Port
 	docs.SwaggerInfo.Schemes = []string{property.Get().Server.ApiDocsSchema}
 	docs.SwaggerInfo.BasePath = serviceBaseURL
 
@@ -61,4 +62,6 @@ func InitRouter(app *gin.Engine, h HandlerList) {
 	employer.POST("/tasks", h.TaskHandler.CreateTask)
 	employer.PATCH("/tasks/:taskID/assign", h.TaskHandler.AssignTask)
 	employer.GET("/tasks/summary", h.TaskHandler.GetTaskSummary)
+	employer.PATCH("/tasks/:taskID", middleware.AuthMiddleware(), h.TaskHandler.UpdateTask)
+	employer.DELETE("/tasks/:taskID", middleware.AuthMiddleware(), h.TaskHandler.DeleteTask)
 }

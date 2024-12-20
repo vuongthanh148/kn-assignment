@@ -27,7 +27,7 @@ const (
 	ErrMsgUpdateTaskStatus  = "Failed to update task status"
 	ErrMsgGetTasks          = "Failed to get tasks"
 	ErrMsgGetTaskSummary    = "Failed to get task summary"
-	ErrMsgGenerateToken     = "Failed to get generate token"
+	ErrMsgGenerateToken     = "Failed to generate token"
 	ErrMsgDuplicateUser     = "User existed"
 	ErrMsgInvalidCredential = "Invalid credential"
 )

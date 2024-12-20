@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"kn-assignment/internal/log"
 	"kn-assignment/property"
-	"time"
 
 	"github.com/exaring/otelpgx"
 	"github.com/georgysavva/scany/dbscan"
@@ -33,12 +32,12 @@ func NewPostgresWithScanApi(ctx context.Context, pgCfg property.PostgresConfig) 
 
 	// MaxConnLifetime
 	if int64(pgCfg.MaxConnLifetime) > 0 {
-		cfg.MaxConnLifetime = time.Duration(pgCfg.MaxConnLifetime)
+		cfg.MaxConnLifetime = pgCfg.MaxConnLifetime
 	}
 
 	// MaxConnIdleTime
 	if pgCfg.MaxConnIdleTime > 0 {
-		cfg.MaxConnIdleTime = time.Duration(pgCfg.MaxConnIdleTime)
+		cfg.MaxConnIdleTime = pgCfg.MaxConnIdleTime
 	}
 
 	// MaxConns

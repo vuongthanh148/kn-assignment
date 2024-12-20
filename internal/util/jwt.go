@@ -7,8 +7,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-var jwtKey = []byte("your_secret_key")
-
 type Claims struct {
 	Id       string `json:"id"`
 	Username string `json:"username"`
@@ -27,7 +25,7 @@ func GenerateAccessToken(id, username, role string) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
+	return token.SignedString([]byte(property.Get().Secret.JWTSecretKey))
 }
 
 func GenerateRefreshToken(id, username, role string) (string, error) {
@@ -41,13 +39,13 @@ func GenerateRefreshToken(id, username, role string) (string, error) {
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
+	return token.SignedString([]byte(property.Get().Secret.JWTSecretKey))
 }
 
 func ValidateToken(tokenStr string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
+		return []byte(property.Get().Secret.JWTSecretKey), nil
 	})
 	if err != nil {
 		return nil, err

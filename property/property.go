@@ -18,8 +18,8 @@ func Init(ctx context.Context) {
 }
 
 func setPostgresConnString() {
-	cfg.Postgres.Password = cfg.Secret.PostgresPasswordSecret
-	cfg.PostgresConfig.ConnString = fmt.Sprintf(cfg.PostgresConfig.ConnUri, cfg.Secret.PostgresPasswordSecret)
+	postgres := cfg.Postgres
+	cfg.PostgresConfig.ConnString = fmt.Sprintf(cfg.PostgresConfig.ConnUri, postgres.Host, postgres.Port, postgres.Database, postgres.User, postgres.Password)
 }
 
 func Get() config {
@@ -71,11 +71,12 @@ type postgres struct {
 
 type secretConfig struct {
 	PostgresPasswordSecret string `envconfig:"POSTGRES_PASSWORD_SECRET"`
+	JWTSecretKey           string `envconfig:"JWT_SECRET_KEY"`
 }
 
 type PostgresConfig struct {
 	// ConnUri: "host=localhost port=5430 database=profile user=postgres password=xxx"
-	ConnUri    string `envconfig:"POSTGRES_CONN_URI" env:"POSTGRES_CONN_URI" default:"host=localhost port=5432 database=postgres user=postgres password=%s"`
+	ConnUri    string `envconfig:"POSTGRES_CONN_URI" env:"POSTGRES_CONN_URI" default:"host=%s port=%s database=%s user=%s password=%s"`
 	ConnString string
 	// MaxConnLifetime is the duration since creation after which a connection will be automatically closed.
 	MaxConnLifetime time.Duration `envconfig:"POSTGRES_MAX_CONN_LIFETIME" env:"POSTGRES_MAX_CONN_LIFETIME" default:"1h"`
@@ -100,15 +101,14 @@ type ServerProperties struct {
 	DebugMode            bool   `envconfig:"DEBUG_MODE" long:"debug-mode" description:"turn on/off debug mode (default: false)" env:"DEBUG_MODE"`
 	PrintConsoleFormat   bool   `envconfig:"CONSOLE_FORMAT" long:"print-console-format" description:"log to print console format or not (default: false)" env:"CONSOLE_FORMAT"`
 	ShutdownTimeout      int64  `envconfig:"SHUTDOWN_TIMEOUT" long:"shutdown-timeout" description:"graceful shutdown timeout" env:"SHUTDOWN_TIMEOUT" default:"300"`
-	Port                 string `envconfig:"PORT" long:"port" description:"server running port" env:"PORT" default:"8080"`
+	Port                 string `envconfig:"PORT" long:"port" description:"server running port" env:"PORT" `
 	ProjectID            string `envconfig:"GOOGLE_CLOUD_PROJECT" long:"project-id" description:"Google project id" env:"GOOGLE_CLOUD_PROJECT"`
 	ServiceName          string `envconfig:"SERVICE_NAME" long:"service-name" description:"Service name" env:"SERVICE_NAME"`
 	ServiceDescription   string `envconfig:"SERVICE_DESCRIPTION" long:"service-description" description:"Service description" env:"SERVICE_DESCRIPTION" default:""`
 	RunLocal             bool   `envconfig:"RUN_LOCAL" long:"run-local" description:"Is service running on local (default: false)" env:"RUN_LOCAL"`
 	LogIgnorePaths       string `envconfig:"LOG_IGNORE_PATHS" long:"log-ignore-paths" description:"url path to ignore logging (full path without host)" env:"LOG_IGNORE_PATHS"`
 	ApiDocs              bool   `envconfig:"API_DOCS" long:"api-docs" description:"expose api docs url (default: false)" env:"API_DOCS"`
-	ApiDocsSchema        string `envconfig:"API_DOCS_SCHEMA" long:"api-docs-schema" description:"Api docs schema" env:"API_DOCS_SCHEMA" default:"https"`
-	ApiDocsHost          string `envconfig:"API_DOCS_HOST" long:"api-docs-host" description:"Api docs host" env:"API_DOCS_HOST" default:"localhost:8080"`
+	ApiDocsSchema        string `envconfig:"API_DOCS_SCHEMA" long:"api-docs-schema" description:"Api docs schema" env:"API_DOCS_SCHEMA" default:"http"`
 	ApiDocsVersion       string `envconfig:"API_DOCS_VERSION" long:"api-docs-version" description:"Api docs version" env:"API_DOCS_VERSION" default:"v0.0.1"`
 	LogClientIgnorePaths string `envconfig:"LOG_CLIENT_IGNORE_PATHS" long:"log-client-ignore-paths" description:"url path to ignore client logging (full path without host)" env:"LOG_CLIENT_IGNORE_PATHS"`
 	Host                 string `envconfig:"HOST" long:"host" description:"Host" env:"HOST" default:"localhost"`

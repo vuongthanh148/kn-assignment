@@ -14,9 +14,9 @@ type User struct {
 }
 
 type CreateUserRequest struct {
-	Username string      `json:"username"`
-	Password string      `json:"password"`
-	Role     domain.Role `json:"role"`
+	Username string      `json:"username" example:"employer1"`
+	Password string      `json:"password" example:"123456"`
+	Role     domain.Role `json:"role" example:"employer"`
 }
 
 func (s *CreateUserRequest) ToDomain() domain.CreateUserRequest {
@@ -48,7 +48,7 @@ func (LoginResponse) FromDomain(s domain.LoginResponse) LoginResponse {
 }
 
 type LoginRequest struct {
-	Username string `json:"username" example:"ken"`
+	Username string `json:"username" example:"employer1"`
 	Password string `json:"password" example:"123456"`
 }
 

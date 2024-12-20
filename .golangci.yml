@@ -4,16 +4,12 @@ linters:
     - errcheck
     - staticcheck
     - gosimple
-    - structcheck
-    - varcheck
     - ineffassign
-    - deadcode
     - typecheck
     - unused
     - gocyclo
     - gofmt
     - goimports
-    - golint
     - misspell
     - nakedret
     - unconvert
@@ -21,10 +17,7 @@ linters:
     - dupl
     - goconst
     - gochecknoinits
-    - gochecknoglobals
-    - interfacer
     - unparam
-    - scopelint
 
 linters-settings:
   govet: {}

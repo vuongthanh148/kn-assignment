@@ -5,10 +5,12 @@ import (
 	"kn-assignment/internal/constant"
 	"kn-assignment/internal/core/domain"
 	errors "kn-assignment/internal/core/error"
+	"kn-assignment/internal/log"
 )
 
 func (s *service) CreateTask(ctx context.Context, task domain.CreateTaskRequest, userId string) error {
 	if task.Title == "" {
+		log.Infof(ctx, "Title is required")
 		return errors.NewCustomErrorWithMessage(constant.ErrCodeInvalidRequest, "Title is required")
 	}
 	return s.taskRepo.CreateTask(ctx, task, userId)
@@ -16,6 +18,7 @@ func (s *service) CreateTask(ctx context.Context, task domain.CreateTaskRequest,
 
 func (s *service) AssignTask(ctx context.Context, taskID, assigneeID string) error {
 	if taskID == "" || assigneeID == "" {
+		log.Infof(ctx, "Task ID and Assignee ID are required")
 		return errors.NewCustomErrorWithMessage(constant.ErrCodeInvalidRequest, "Task ID and Assignee ID are required")
 	}
 	// Validate that the assignee exists and is an employee
@@ -43,11 +46,11 @@ func (s *service) UpdateTaskStatus(ctx context.Context, taskID string, status do
 	return s.taskRepo.UpdateTaskStatus(ctx, taskID, status, userId)
 }
 
-func (s *service) GetAllTasks(ctx context.Context, userRole, userID string, filter map[string]string, sort string) ([]domain.Task, error) {
+func (s *service) GetAllTasks(ctx context.Context, userRole, userID string, filter map[string]string, sort, order string) ([]domain.Task, error) {
 	if userRole == string(domain.RoleEmployee) {
 		filter["assignee_id"] = userID
 	}
-	return s.taskRepo.GetAllTasks(ctx, filter, sort)
+	return s.taskRepo.GetAllTasks(ctx, filter, sort, order)
 }
 
 func (s *service) GetTaskSummary(ctx context.Context) ([]domain.TaskSummary, error) {
@@ -63,4 +66,12 @@ func (s *service) VerifyTaskAssignment(ctx context.Context, taskID, userID strin
 		return false, nil
 	}
 	return *task.AssigneeID == userID, nil
+}
+
+func (s *service) UpdateTask(ctx context.Context, taskID string, name, description *string) error {
+	return s.taskRepo.UpdateTask(ctx, taskID, name, description)
+}
+
+func (s *service) DeleteTask(ctx context.Context, taskID string) error {
+	return s.taskRepo.DeleteTask(ctx, taskID)
 }

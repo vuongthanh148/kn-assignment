@@ -8,11 +8,11 @@ import (
 	authhdl "kn-assignment/internal/handler/auth-hdl"
 	taskhdl "kn-assignment/internal/handler/task-hdl"
 	"kn-assignment/internal/log"
+	"kn-assignment/internal/middleware"
 	authrepo "kn-assignment/internal/repository/postgres/auth-repo"
 	taskrepo "kn-assignment/internal/repository/postgres/task-repo"
 	userrepo "kn-assignment/internal/repository/postgres/user-repo"
 	"kn-assignment/internal/router"
-	"kn-assignment/middleware"
 	"kn-assignment/property"
 	"kn-assignment/server"
 	"os"
@@ -32,9 +32,7 @@ func main() {
 	property.Init(ctx)
 
 	// Run database migrations
-	postgres := property.Get().Postgres
-	databaseUrl := "postgres://" + postgres.User + ":" + postgres.Password + "@" + postgres.Host + ":" + postgres.Port + "/" + postgres.Database + "?sslmode=disable"
-	server.RunMigrations(ctx, databaseUrl)
+	server.RunMigrations(ctx)
 
 	// init infrastructure
 	pgx, scanapi := infrastructure.NewPostgres(ctx)
@@ -56,6 +54,7 @@ func main() {
 	// init server
 	engine := server.InitServer()
 
+	// engine.Use(cors.Default())
 	engine.Use(middleware.RequestLogger(ctx))
 	engine.Use(middleware.ResponseLogger(ctx))
 
@@ -67,13 +66,13 @@ func main() {
 
 	router.InitRouter(engine, route)
 
-	serverHost := property.Get().Server.Host
+	// serverHost := property.Get().Server.Host
 	serverPort := property.Get().Server.Port
 
 	gracefulStop := make(chan os.Signal, 1)
 	signal.Notify(gracefulStop, syscall.SIGINT, syscall.SIGTERM)
 
-	server.StartServerWithCtx(ctx, engine, serverHost, serverPort)
+	server.StartServerWithCtx(ctx, engine, "", serverPort)
 
 	// Wait for a termination signal
 	sig := <-gracefulStop

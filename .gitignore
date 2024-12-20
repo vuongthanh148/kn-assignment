@@ -63,3 +63,5 @@ go.work.sum
 
 # Debug
 cmd/server/__debug*
+
+golangci-lint

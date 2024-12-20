@@ -41,6 +41,8 @@ definitions:
         type: string
       created_at:
         type: string
+      created_by:
+        type: string
       description:
         type: string
       due_date:
@@ -52,6 +54,8 @@ definitions:
       title:
         type: string
       updated_at:
+        type: string
+      updated_by:
         type: string
     type: object
   domain.TaskStatus:
@@ -98,10 +102,14 @@ definitions:
   dto.CreateUserRequest:
     properties:
       password:
+        example: "123456"
         type: string
       role:
-        $ref: '#/definitions/domain.Role'
+        allOf:
+        - $ref: '#/definitions/domain.Role'
+        example: employer
       username:
+        example: employer1
         type: string
     type: object
   dto.LoginRequest:
@@ -110,7 +118,7 @@ definitions:
         example: "123456"
         type: string
       username:
-        example: ken
+        example: employer1
         type: string
     type: object
   dto.LoginResponse:
@@ -125,6 +133,13 @@ definitions:
   dto.RefreshTokenRequest:
     properties:
       refresh_token:
+        type: string
+    type: object
+  dto.UpdateTaskRequest:
+    properties:
+      description:
+        type: string
+      name:
         type: string
     type: object
   dto.UpdateTaskStatusRequest:
@@ -265,12 +280,20 @@ paths:
         name: assignee
         type: string
       - description: Status
+        enum:
+        - '"Pending"'
+        - '"In progress"'
+        - '"Completed"'
         in: query
         name: status
         type: string
-      - description: Sort
+      - description: Sort by field (e.g., created_at, due_date, status)
         in: query
         name: sort
+        type: string
+      - description: Sort order (asc or desc)
+        in: query
+        name: order
         type: string
       produces:
       - application/json
@@ -319,6 +342,69 @@ paths:
       security:
       - BearerAuth: []
       summary: Create a new task
+      tags:
+      - tasks
+  /tasks/{taskID}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete a task by ID
+      parameters:
+      - description: Task ID
+        in: path
+        name: taskID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a task
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      description: Update the details of a specific task
+      parameters:
+      - description: Task ID
+        in: path
+        name: taskID
+        required: true
+        type: string
+      - description: Task
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/errors.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update a task
       tags:
       - tasks
   /tasks/{taskID}/assign:

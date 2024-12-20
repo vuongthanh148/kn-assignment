@@ -36,7 +36,7 @@ func StartServerWithCtx(ctx context.Context, h http.Handler, host string, port s
 	}
 
 	go func() {
-		log.Infof(ctx, "server running at: %s:%s", host, port)
+		log.Infof(ctx, "server running at port: %s", port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Errorf(ctx, "error server listen and serve: %v\n", err)
 		}
@@ -62,8 +62,13 @@ func StartServerWithCtx(ctx context.Context, h http.Handler, host string, port s
 	log.Info(ctx, "Server exiting")
 }
 
-func RunMigrations(ctx context.Context, databaseUrl string) {
+func RunMigrations(ctx context.Context) {
+	postgres := property.Get().Postgres
+
+	databaseUrl := "postgres://" + postgres.User + ":" + postgres.Password + "@" + postgres.Host + ":" + postgres.Port + "/" + postgres.Database + "?sslmode=disable"
+
 	migrationsPath := "file://migrations"
+	log.Info(ctx, databaseUrl)
 	if _, err := os.Stat("migrations"); os.IsNotExist(err) {
 		log.Fatalf(ctx, "Migrations folder not found: %v", err)
 	}

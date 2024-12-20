@@ -5,21 +5,26 @@ services:
     image: postgres:13
     environment:
       POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
       POSTGRES_DB: taskdb
     ports:
       - "5432:5432"
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
 
-  # app:
-  #   build: .
-  #   environment:
-  #     DATABASE_URL: postgres://user:password@db:5432/taskdb?sslmode=disable
-  #   ports:
-  #     - "8080:8080"
-  #   depends_on:
-  #     - db
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      PORT: 8080
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: user
+      POSTGRES_DATABASE: taskdb
+      API_DOCS: true
+    ports:
+      - "8080:8080"
+    command: ["./api"]
 
 volumes:
-  db_data:
+  db-data:

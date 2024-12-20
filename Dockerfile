@@ -1,15 +1,31 @@
-FROM golang:1.18-alpine
+# Use the official Golang image as the base image
+FROM golang:1.23-alpine
 
+# Set the Current Working Directory inside the container
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
+# Copy go.mod and go.sum files
+COPY go.mod go.sum ./
+
+# Download all dependencies. Dependencies will be cached if the go.mod and go.sum files are not changed
 RUN go mod download
 
-COPY . ./
+# Copy the source from the current directory to the Working Directory inside the container
+COPY . .
 
-RUN go build -o /task-api
+ENV POSTGRES_USER=user
+ENV POSTGRES_PASSWORD=password
+ENV POSTGRES_HOST=db
+ENV POSTGRES_PORT=5432
+ENV POSTGRES_NAME=taskdb
+ENV PORT=8080
+ENV API_DOCS=true
 
+# Build the Go app
+RUN go build -o api ./cmd/server/main.go
+
+# Expose port 8080 to the outside world
 EXPOSE 8080
 
-CMD ["/task-api"]
+# Command to run the executable
+CMD ["./api"]
